@@ -1,8 +1,8 @@
-'use strict'
+"use strict";
 
-const { post } = require('@adonisjs/framework/src/Route/Manager')
+const { post } = require("@adonisjs/framework/src/Route/Manager");
 
-const Sale = use('App/Models/Sale')
+const Sale = use("App/Models/Sale");
 
 /** @typedef {import('@adonisjs/framework/src/Request')} Request */
 /** @typedef {import('@adonisjs/framework/src/Response')} Response */
@@ -21,9 +21,10 @@ class SaleController {
    * @param {Response} ctx.response
    * @param {View} ctx.view
    */
-  async index ({ request, response, view }) {
-    const sales = await Sale.query().with('client').fetch()
-    return sales
+  async index({ request, response, view }) {
+    const sales = await Sale.query().with("products").with("client").fetch();
+
+    return sales;
   }
 
   /**
@@ -35,8 +36,7 @@ class SaleController {
    * @param {Response} ctx.response
    * @param {View} ctx.view
    */
-  async create ({ request, response, view }) {
-  }
+  async create({ request, response, view }) {}
 
   /**
    * Create/save a new sale.
@@ -46,10 +46,18 @@ class SaleController {
    * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async store ({ request, response }) {
-    const data = request.only(['client_id','products','status'])
-    const sale = await Sale.create(data)
-    return sale
+  async store({ request, response }) {
+    const { products, ...data } = request.only([
+      "client_id",
+      "status",
+      "products",
+    ]);
+    const sale = await Sale.create(data);
+    if (products && products.length > 0) {
+      await sale.products().attach(products);
+      await sale.load("products");
+    }
+    return sale;
   }
 
   /**
@@ -61,9 +69,9 @@ class SaleController {
    * @param {Response} ctx.response
    * @param {View} ctx.view
    */
-  async show ({ params, request, response, view }) {
-    const sale = await Sale.findOrFail(params.id)
-    return sale
+  async show({ params, request, response, view }) {
+    const sale = await Sale.findOrFail(params.id);
+    return sale;
   }
 
   /**
@@ -75,8 +83,7 @@ class SaleController {
    * @param {Response} ctx.response
    * @param {View} ctx.view
    */
-  async edit ({ params, request, response, view }) {
-  }
+  async edit({ params, request, response, view }) {}
 
   /**
    * Update sale details.
@@ -86,13 +93,13 @@ class SaleController {
    * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async update ({ params, request, response }) {
-    const data = await request.only(['client_id','products','status'])
-    const sale = await Sale.findOrFail(params.id)
+  async update({ params, request, response }) {
+    const data = await request.only(["client_id", "products", "status"]);
+    const sale = await Sale.findOrFail(params.id);
 
-    sale.merge(data)
-    await sale.save()
-    return sale
+    sale.merge(data);
+    await sale.save();
+    return sale;
   }
 
   /**
@@ -103,10 +110,10 @@ class SaleController {
    * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async destroy ({ params, request, response }) {
-    const sale = await Sale.findOrFail(params.id)
-    await sale.delete()
+  async destroy({ params, request, response }) {
+    const sale = await Sale.findOrFail(params.id);
+    await sale.delete();
   }
 }
 
-module.exports = SaleController
+module.exports = SaleController;
